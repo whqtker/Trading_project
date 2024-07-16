@@ -49,8 +49,6 @@ def insert_today_stock_data():
                               output="주식일봉차트조회",
                               next=0)
         
-        print(data)
-
         # 데이터 전처리: 빈 값('')을 None으로 변환
         preprocessed_data = []
         for row in data.itertuples(index=False):
@@ -58,7 +56,39 @@ def insert_today_stock_data():
             preprocessed_data.append(preprocessed_row)
 
         # INSERT 쿼리 작성
-        sql = "INSERT INTO stock (stock_code, current_price, trading_volume, trading_amount, date, open_price, high_price, low_price, adjusted_price_flag, adjusted_price_ratio, sector, sub_sector, stock_info, adjusted_price_event, previous_close_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT IGNORE INTO stock (stock_code, current_price, trading_volume, trading_amount, date, open_price, high_price, low_price, adjusted_price_flag, adjusted_price_ratio, sector, sub_sector, stock_info, adjusted_price_event, previous_close_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        
+        # 쿼리 실행
+        if preprocessed_data:  # 데이터가 비어있지 않은 경우에만 실행
+            cursor.executemany(sql, preprocessed_data)
+
+        # 변경 사항 커밋
+        db.commit()
+
+        time.sleep(3.6)
+
+def insert_info_stock_data():
+    now = datetime.datetime.now()
+    today = now.strftime("%Y%m%d")
+
+    opt = "opt10001"
+    for i, code in enumerate(codes):
+        print(f"{i}/{len(codes)} {code}")
+        data = kiwoom.block_request(opt,
+                              종목코드=code,
+                              기준일자=today,
+                              수정주가구분=1,
+                              output="주식일봉차트조회",
+                              next=0)
+        
+        # 데이터 전처리: 빈 값('')을 None으로 변환
+        preprocessed_data = []
+        for row in data.itertuples(index=False):
+            preprocessed_row = (code,) + tuple(None if cell == '' else cell for cell in row[1:])
+            preprocessed_data.append(preprocessed_row)
+
+        # INSERT 쿼리 작성
+        sql = "INSERT IGNORE INTO === (stock_code, current_price, trading_volume, trading_amount, date, open_price, high_price, low_price, adjusted_price_flag, adjusted_price_ratio, sector, sub_sector, stock_info, adjusted_price_event, previous_close_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         
         # 쿼리 실행
         if preprocessed_data:  # 데이터가 비어있지 않은 경우에만 실행
