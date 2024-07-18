@@ -28,7 +28,7 @@ db_config = {
 db = mysql.connector.connect(
     user=db_config['user'],
     password=db_config['password'],
-    host=db_config['host'],
+    host=db_config['host'],5
     port=db_config['port'],
     database=db_config['database']
 )
@@ -100,7 +100,7 @@ def insert_opt10001():
         time.sleep(3.6)
 
 if __name__ == "__main__":
-    # insert_opt10081()
-    insert_opt10001()
+    insert_opt10081()
+    # insert_opt10001()
 
     db.close()

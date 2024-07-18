@@ -4,3 +4,6 @@
 
 qt.qpa.plugin: Could not find the Qt platform plugin "windows" in ""
 This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem. 오류 발생 시: https://log-mylife.tistory.com/entry/Could-not-load-the-Qt-platform-plugin-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0%EB%B2%95
+---
+TODO
+외래 키 지정
