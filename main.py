@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import shutil
 import mysql.connector
+from sqlalchemy import create_engine
 
 # 로그인
 kiwoom = Kiwoom()
@@ -28,10 +29,13 @@ db_config = {
 db = mysql.connector.connect(
     user=db_config['user'],
     password=db_config['password'],
-    host=db_config['host'],5
+    host=db_config['host'],
     port=db_config['port'],
     database=db_config['database']
 )
+
+# SQLAlchemy 엔진 생성
+engine = create_engine(f"mysql+mysqlconnector://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}")
 
 cursor = db.cursor()
 
@@ -99,8 +103,155 @@ def insert_opt10001():
 
         time.sleep(3.6)
 
+def filtering():
+    sql = """
+    WITH RankedData AS (
+        SELECT *,
+            NTILE(100) OVER (ORDER BY PBR) AS PBR_Percentile,
+            NTILE(100) OVER (ORDER BY PER) AS PER_Percentile,
+            NTILE(100) OVER (ORDER BY ROE) AS ROE_Percentile
+        FROM opt10001
+    )
+    SELECT stock_code, stock_name, PBR, PER, ROE
+    FROM RankedData
+    WHERE PBR_Percentile > 30 AND PER_Percentile > 30 AND ROE_Percentile > 10;
+    """
+    
+    cursor.execute(sql)
+    
+    result = cursor.fetchall()
+    
+    for row in result:
+        print(row)
+
+def data_processing():
+    query = "SELECT DISTINCT stock_code FROM opt10081"
+    unique_code_df = pd.read_sql(query, db)
+    unique_code_list = unique_code_df['stock_code'].tolist()
+    
+    for code in unique_code_list:
+        sql = f"SELECT * FROM opt10081 WHERE stock_code = '{code}'"
+        df = pd.read_sql(sql, db)
+        df.sort_values(by='date', ascending=True, inplace=True)
+
+        clo5 = df['current_price'].rolling(window=5).mean()
+        clo20 = df['current_price'].rolling(window=20).mean()
+        clo60 = df['current_price'].rolling(window=60).mean()
+        clo120 = df['current_price'].rolling(window=120).mean()
+        clo200 = df['current_price'].rolling(window=200).mean()
+
+        df['clo5'] = round(clo5, 2)
+        df['clo20'] = round(clo20, 2)
+        df['clo60'] = round(clo60, 2)
+        df['clo120'] = round(clo120, 2)
+        df['clo200'] = round(clo200, 2)
+
+        std5 = df['current_price'].rolling(window=5).std()
+        std20 = df['current_price'].rolling(window=20).std()
+        std60 = df['current_price'].rolling(window=60).std()
+        std120 = df['current_price'].rolling(window=120).std()
+        std200 = df['current_price'].rolling(window=200).std()
+
+        df['Price_Disparity_5'] = df['current_price'] / clo5
+        df['Price_Disparity_20'] = df['current_price'] / clo20
+        df['Price_Disparity_60'] = df['current_price'] / clo60
+        df['Price_Disparity_120'] = df['current_price'] / clo120
+        df['Price_Disparity_200'] = df['current_price'] / clo200
+
+        df['Price_Volatility_5'] = std5 / clo5
+        df['Price_Volatility_20'] = std20 / clo20
+        df['Price_Volatility_60'] = std60 / clo60
+        df['Price_Volatility_120'] = std120 / clo120
+        df['Price_Volatility_200'] = std200 / clo200
+
+        vol5 = df['trading_volume'].rolling(window=5).mean()
+        vol20 = df['trading_volume'].rolling(window=20).mean()
+        vol60 = df['trading_volume'].rolling(window=60).mean()
+        vol120 = df['trading_volume'].rolling(window=120).mean()
+        vol200 = df['trading_volume'].rolling(window=200).mean()
+
+        df['vol5'] = df['trading_volume'].rolling(window=5).mean()
+        df['vol10'] = df['trading_volume'].rolling(window=10).mean()
+        df['vol20'] = df['trading_volume'].rolling(window=20).mean()
+        df['vol40'] = df['trading_volume'].rolling(window=40).mean()
+        df['vol60'] = df['trading_volume'].rolling(window=60).mean()
+        df['vol80'] = df['trading_volume'].rolling(window=80).mean()
+        df['vol100'] = df['trading_volume'].rolling(window=100).mean()
+        df['vol120'] = df['trading_volume'].rolling(window=120).mean()
+
+        vstd5 = df['trading_volume'].rolling(window=5).std()
+        vstd20 = df['trading_volume'].rolling(window=20).std()
+        vstd60 = df['trading_volume'].rolling(window=60).std()
+        vstd120 = df['trading_volume'].rolling(window=120).std()
+        vstd200 = df['trading_volume'].rolling(window=200).std()
+
+        df['Volume_Disparity_5'] = df['trading_volume'] / vol5
+        df['Volume_Disparity_20'] = df['trading_volume'] / vol20
+        df['Volume_Disparity_60'] = df['trading_volume'] / vol60
+        df['Volume_Disparity_120'] = df['trading_volume'] / vol120
+        df['Volume_Disparity_200'] = df['trading_volume'] / vol200
+
+        df['Volume_Volatility_5'] = vstd5 / vol5
+        df['Volume_Volatility_20'] = vstd20 / vol20
+        df['Volume_Volatility_60'] = vstd60 / vol60
+        df['Volume_Volatility_120'] = vstd120 / vol120
+        df['Volume_Volatility_200'] = vstd200 / vol200
+
+        df['Price_Disparity_5_20'] = clo5 / clo20
+        df['Price_Disparity_5_60'] = clo5 / clo60
+        df['Price_Disparity_5_120'] = clo5 / clo120
+        df['Price_Disparity_5_200'] = clo5 / clo200
+        df['Price_Disparity_20_60'] = clo20 / clo60
+        df['Price_Disparity_20_120'] = clo20 / clo120
+        df['Price_Disparity_20_200'] = clo20 / clo200
+        df['Price_Disparity_60_120'] = clo60 / clo120
+        df['Price_Disparity_60_200'] = clo60 / clo200
+        df['Price_Disparity_120_200'] = clo120 / clo200
+
+        df['Price_Volatility_5_20'] = std5 / std20
+        df['Price_Volatility_5_60'] = std5 / std60
+        df['Price_Volatility_5_120'] = std5 / std120
+        df['Price_Volatility_5_200'] = std5 / std200
+        df['Price_Volatility_20_60'] = std20 / std60
+        df['Price_Volatility_20_120'] = std20 / std120
+        df['Price_Volatility_20_200'] = std20 / std200
+        df['Price_Volatility_60_120'] = std60 / std120
+        df['Price_Volatility_60_200'] = std60 / std200
+        df['Price_Volatility_120_200'] = std120 / std200
+
+        df['Volume_Disparity_5_20'] = vol5 / vol20
+        df['Volume_Disparity_5_60'] = vol5 / vol60
+        df['Volume_Disparity_5_120'] = vol5 / vol120
+        df['Volume_Disparity_5_200'] = vol5 / vol200
+        df['Volume_Disparity_20_60'] = vol20 / vol60
+        df['Volume_Disparity_20_120'] = vol20 / vol120
+        df['Volume_Disparity_20_200'] = vol20 / vol200
+        df['Volume_Disparity_60_120'] = vol60 / vol120
+        df['Volume_Disparity_60_200'] = vol60 / vol200
+        df['Volume_Disparity_120_200'] = vol120 / vol200
+
+        df['Volume_Volatility_5_20'] = vstd5 / vstd20
+        df['Volume_Volatility_5_60'] = vstd5 / vstd60
+        df['Volume_Volatility_5_120'] = vstd5 / vstd120
+        df['Volume_Volatility_5_200'] = vstd5 / vstd200
+        df['Volume_Volatility_20_60'] = vstd20 / vstd60
+        df['Volume_Volatility_20_120'] = vstd20 / vstd120
+        df['Volume_Volatility_20_200'] = vstd20 / vstd200
+        df['Volume_Volatility_60_120'] = vstd60 / vstd120
+        df['Volume_Volatility_60_200'] = vstd60 / vstd200
+        df['Volume_Volatility_120_200'] = vstd120 / vstd200
+
+        # Nan, inf 값 0으로 치환
+        df.replace([float('inf'), -float('inf')], 0, inplace=True)
+        df.fillna(0, inplace=True)
+
+        df.to_sql(name='data_processed', con=engine, if_exists='append', index=False)
+
 if __name__ == "__main__":
-    insert_opt10081()
+    # insert_opt10081()
     # insert_opt10001()
+    # filtering()
+    data_processing()
 
     db.close()
+    engine.dispose()
