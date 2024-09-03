@@ -1,9 +1,11 @@
 import datetime
 import time
 from database import get_latest_dates
+from telegram_bot import send_message
 
 # 600일 치 opt10081 데이터 수집 및 저장
-def insert_opt10081(cursor, db, kiwoom, codes):
+async def insert_opt10081(cursor, db, kiwoom, codes):
+    await send_message("opt10081 데이터 삽입 시작")
     now = datetime.datetime.now()
     today = now.strftime("%Y%m%d")
 
@@ -35,9 +37,12 @@ def insert_opt10081(cursor, db, kiwoom, codes):
 
         time.sleep(3.6)
 
+    await send_message("opt10081 데이터 삽입 완료")
+
 # 600일 치 opt10001 데이터 수집 및 저장
 # 값이 변동되지 않았다면 단순히 날짜만 수정
-def insert_opt10001(cursor, db, kiwoom, codes):
+async def insert_opt10001(cursor, db, kiwoom, codes):
+    await send_message("opt10001 데이터 삽입 시작")
     date = get_latest_dates()
 
     opt = "opt10001"
@@ -136,6 +141,8 @@ def insert_opt10001(cursor, db, kiwoom, codes):
         db.commit()
 
         time.sleep(3.6)
+
+    await send_message("opt10001 데이터 삽입 완료")
 
 # 600일 치 opt20006 데이터 수집 및 저장
 def insert_opt20006(cursor, db, kiwoom):

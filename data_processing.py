@@ -1,8 +1,10 @@
 import pandas as pd
 from sqlalchemy import text
+from telegram_bot import send_message
 
 # PBR, PER, ROE를 통해 필터링
-def filtering(cursor, db):
+async def filtering(cursor, db):
+    await send_message("filtering 시작")
     sql_filtering = """
     WITH RankedData AS (
         SELECT *,
@@ -48,10 +50,11 @@ def filtering(cursor, db):
         cursor.execute(sql_update_unfiltered, (date_value, *filtered_stock_codes))
         
         db.commit()  # Commit the changes to the database
-        print("필터링 완료")
+        await send_message("filtering 완료")
 
 # rolling window를 통한 데이터 전처리
-def data_processing(cursor, db, engine):
+async def data_processing(cursor, db, engine):
+    await send_message("데이터 전처리 시작")
     query = "SELECT DISTINCT stock_code FROM opt10081"
     unique_code_df = pd.read_sql(query, db)
     unique_code_list = unique_code_df['stock_code'].tolist()
@@ -287,6 +290,4 @@ def data_processing(cursor, db, engine):
             with engine.connect() as conn:
                 conn.execute(insert_query, **row.to_dict())
 
-        print(f"{i+1}/{len(unique_code_list)} {code} 데이터 전처리 완료")
-
-    print("데이터 전처리 완료")
+    await send_message("데이터 전처리 완료")

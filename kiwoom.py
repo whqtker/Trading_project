@@ -31,6 +31,9 @@ def get_bought_codes(kiwoom):
 # 종목 이름으로 종목 코드 얻기
 def get_codes_from_name(cursor, stock_names):
     try:
+        if not stock_names:
+            return []
+
         # Convert stock_names list to a string format suitable for SQL IN clause
         stock_names_str = ','.join(f"'{name}'" for name in stock_names)
         
@@ -49,7 +52,7 @@ def get_codes_from_name(cursor, stock_names):
 
     except mysql.connector.Error as err:
         print(f"Database connection error: {err}")
-        return None
+        return []
 
 # 매수 종목 코드 얻기
 def get_buy_codes(cursor):
@@ -71,15 +74,18 @@ def get_buy_codes(cursor):
 
     except mysql.connector.Error as err:
         print(f"Database connection error: {err}")
-        return None
-
+        return []
+    
 # 매도 종목 코드, 매도량 얻기
 def get_sell_codes(cursor, kiwoom):
     bought_name = get_bought_codes(kiwoom)['종목명'].tolist()
     sell_amount = get_bought_codes(kiwoom)['보유수량'].tolist()
     bought_codes = get_codes_from_name(cursor, bought_name)
 
-    if (len(bought_codes) >= 25):
+    if not bought_codes:
+        return [], []
+
+    if len(bought_codes) >= 25:
         # 매수한 종목들에 대하여 확률 가장 낮은 값 매도하기
         # 단, 남은 종목들의 수는 25개여야 함
         try:
@@ -103,7 +109,7 @@ def get_sell_codes(cursor, kiwoom):
 
         except mysql.connector.Error as err:
             print(f"Database connection error: {err}")
-            return None
+            return [], []
     else:
         # 매수한 종목들에 대하여 재무재표와 확률값 구하기
         # 매수 조건에 맞지 않으면 매도
@@ -127,7 +133,7 @@ def get_sell_codes(cursor, kiwoom):
 
         except mysql.connector.Error as err:
             print(f"Database connection error: {err}")
-            return None, None
+            return [], []
 
 # 사용자 정보 구하기
 def user_info(kiwoom):

@@ -1,7 +1,9 @@
 import subprocess
 import os
+from telegram_bot import send_message
 
-def sub_get_model_output():
+async def sub_get_model_output():
+    await send_message("DB에 모델 출력 삽입 시작.")
     python_3_12_path = r"C:\Users\chosh\AppData\Local\Programs\Python\Python312\python.exe"  # Windows의 경우
     script_to_run = os.path.join(os.path.dirname(__file__), "get_model_output.py")  # 스크립트 경로 설정
 
@@ -15,3 +17,5 @@ def sub_get_model_output():
         print("File not found:", e)
     except Exception as e:
         print("An unexpected error occurred:", e)
+
+    await send_message("DB에 모델 출력 삽입 완료.")
