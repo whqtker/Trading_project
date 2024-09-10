@@ -3,6 +3,7 @@ from sqlalchemy import create_engine as sqlalchemy_create_engine
 from config import db_config
 import pandas as pd
 
+# 데이터베이스 연결, dn, cursor 리턴
 def connect_to_db():
     db = mysql.connector.connect(
         user=db_config['user'],
@@ -14,10 +15,12 @@ def connect_to_db():
     cursor = db.cursor()
     return db, cursor
 
+# 데이터베이스 엔진 생성
 def create_db_engine():
     engine = sqlalchemy_create_engine(f"mysql+mysqlconnector://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}")
     return engine
 
+# 데이터베이스 연결 및 엔진 생성(올인원)
 def connect_and_create_engine():
     db, cursor = connect_to_db()
     engine = create_db_engine()
