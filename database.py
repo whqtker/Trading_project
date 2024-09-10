@@ -18,6 +18,11 @@ def create_db_engine():
     engine = sqlalchemy_create_engine(f"mysql+mysqlconnector://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}")
     return engine
 
+def connect_and_create_engine():
+    db, cursor = connect_to_db()
+    engine = create_db_engine()
+    return db, cursor, engine
+
 # 테이블의 최신 날짜 조회
 def get_latest_dates(cursor):
     try:
@@ -31,9 +36,6 @@ def get_latest_dates(cursor):
     except mysql.connector.Error as err:
         print(f"Database connection error: {err}")
         return None
-    finally:
-        if cursor:
-            cursor.close()
 
 # 특정 테이블의 데이터를 hdf5 파일로 내보내기
 def export_table_to_hdf5(cursor, db, table_name):

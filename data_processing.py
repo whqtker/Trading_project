@@ -5,6 +5,8 @@ from telegram_bot import send_message
 # PBR, PER, ROE를 통해 필터링
 async def filtering(cursor, db):
     await send_message("filtering 시작")
+
+    cursor = db.cursor()
     sql_filtering = """
     WITH RankedData AS (
         SELECT *,
@@ -58,6 +60,36 @@ async def data_processing(cursor, db, engine):
     query = "SELECT DISTINCT stock_code FROM opt10081"
     unique_code_df = pd.read_sql(query, db)
     unique_code_list = unique_code_df['stock_code'].tolist()
+
+    # unique_code_list = [
+    #     '065560',
+    #     '136510',
+    #     '272220',
+    #     '272230',
+    #     '322120',
+    #     '322130',
+    #     '322150',
+    #     '333980',
+    #     '391590',
+    #     '400840',
+    #     '402520',
+    #     '430230',
+    #     '436180',
+    #     '510017',
+    #     '510025',
+    #     '530079',
+    #     '530080',
+    #     '530082',
+    #     '550061',
+    #     '570042',
+    #     '570043',
+    #     '570044',
+    #     '610011',
+    #     '610014',
+    #     '610015',
+    #     '610026',
+    #     '610027'
+    # ]
     
     for i, code in enumerate(unique_code_list):
         sql = f"SELECT * FROM opt10081 WHERE stock_code = '{code}'"
@@ -175,9 +207,17 @@ async def data_processing(cursor, db, engine):
         df.replace([float('inf'), -float('inf')], 0, inplace=True)
         df.fillna(0, inplace=True)
 
+        df['date'] = df['date'].apply(lambda x: None if x == 0 else x)
+
+        # 변환된 데이터 확인 (디버깅용)
+        print(df['date'].unique())
+        print(df['stock_code'].unique())
+
         # DataFrame을 직접 data_processed 테이블에 삽입
         for index, row in df.iterrows():
-            insert_query = text("""
+            # 'date' 열이 None인지 확인하고, None이 아닌 경우에만 삽입
+            if row['date'] is not None:
+                insert_query = text("""
                 INSERT INTO data_processed (stock_code, date, current_price, trading_volume, clo5, clo20, clo60, clo120, clo200, 
                                             Price_Disparity_5, Price_Disparity_20, Price_Disparity_60, Price_Disparity_120, Price_Disparity_200, 
                                             Price_Volatility_5, Price_Volatility_20, Price_Volatility_60, Price_Volatility_120, Price_Volatility_200, 
@@ -210,84 +250,8 @@ async def data_processing(cursor, db, engine):
                         :Volume_Disparity_60_200, :Volume_Disparity_120_200, :Volume_Volatility_5_20, :Volume_Volatility_5_60, 
                         :Volume_Volatility_5_120, :Volume_Volatility_5_200, :Volume_Volatility_20_60, :Volume_Volatility_20_120, 
                         :Volume_Volatility_20_200, :Volume_Volatility_60_120, :Volume_Volatility_60_200, :Volume_Volatility_120_200)
-                ON DUPLICATE KEY UPDATE
-                    current_price = VALUES(current_price),
-                    trading_volume = VALUES(trading_volume),
-                    clo5 = VALUES(clo5),
-                    clo20 = VALUES(clo20),
-                    clo60 = VALUES(clo60),
-                    clo120 = VALUES(clo120),
-                    clo200 = VALUES(clo200),
-                    Price_Disparity_5 = VALUES(Price_Disparity_5),
-                    Price_Disparity_20 = VALUES(Price_Disparity_20),
-                    Price_Disparity_60 = VALUES(Price_Disparity_60),
-                    Price_Disparity_120 = VALUES(Price_Disparity_120),
-                    Price_Disparity_200 = VALUES(Price_Disparity_200),
-                    Price_Volatility_5 = VALUES(Price_Volatility_5),
-                    Price_Volatility_20 = VALUES(Price_Volatility_20),
-                    Price_Volatility_60 = VALUES(Price_Volatility_60),
-                    Price_Volatility_120 = VALUES(Price_Volatility_120),
-                    Price_Volatility_200 = VALUES(Price_Volatility_200),
-                    vol5 = VALUES(vol5),
-                    vol10 = VALUES(vol10),
-                    vol20 = VALUES(vol20),
-                    vol40 = VALUES(vol40),
-                    vol60 = VALUES(vol60),
-                    vol80 = VALUES(vol80),
-                    vol100 = VALUES(vol100),
-                    vol120 = VALUES(vol120),
-                    Volume_Disparity_5 = VALUES(Volume_Disparity_5),
-                    Volume_Disparity_20 = VALUES(Volume_Disparity_20),
-                    Volume_Disparity_60 = VALUES(Volume_Disparity_60),
-                    Volume_Disparity_120 = VALUES(Volume_Disparity_120),
-                    Volume_Disparity_200 = VALUES(Volume_Disparity_200),
-                    Volume_Volatility_5 = VALUES(Volume_Volatility_5),
-                    Volume_Volatility_20 = VALUES(Volume_Volatility_20),
-                    Volume_Volatility_60 = VALUES(Volume_Volatility_60),
-                    Volume_Volatility_120 = VALUES(Volume_Volatility_120),
-                    Volume_Volatility_200 = VALUES(Volume_Volatility_200),
-                    Price_Disparity_5_20 = VALUES(Price_Disparity_5_20),
-                    Price_Disparity_5_60 = VALUES(Price_Disparity_5_60),
-                    Price_Disparity_5_120 = VALUES(Price_Disparity_5_120),
-                    Price_Disparity_5_200 = VALUES(Price_Disparity_5_200),
-                    Price_Disparity_20_60 = VALUES(Price_Disparity_20_60),
-                    Price_Disparity_20_120 = VALUES(Price_Disparity_20_120),
-                    Price_Disparity_20_200 = VALUES(Price_Disparity_20_200),
-                    Price_Disparity_60_120 = VALUES(Price_Disparity_60_120),
-                    Price_Disparity_60_200 = VALUES(Price_Disparity_60_200),
-                    Price_Disparity_120_200 = VALUES(Price_Disparity_120_200),
-                    Price_Volatility_5_20 = VALUES(Price_Volatility_5_20),
-                    Price_Volatility_5_60 = VALUES(Price_Volatility_5_60),
-                    Price_Volatility_5_120 = VALUES(Price_Volatility_5_120),
-                    Price_Volatility_5_200 = VALUES(Price_Volatility_5_200),
-                    Price_Volatility_20_60 = VALUES(Price_Volatility_20_60),
-                    Price_Volatility_20_120 = VALUES(Price_Volatility_20_120),
-                    Price_Volatility_20_200 = VALUES(Price_Volatility_20_200),
-                    Price_Volatility_60_120 = VALUES(Price_Volatility_60_120),
-                    Price_Volatility_60_200 = VALUES(Price_Volatility_60_200),
-                    Price_Volatility_120_200 = VALUES(Price_Volatility_120_200),
-                    Volume_Disparity_5_20 = VALUES(Volume_Disparity_5_20),
-                    Volume_Disparity_5_60 = VALUES(Volume_Disparity_5_60),
-                    Volume_Disparity_5_120 = VALUES(Volume_Disparity_5_120),
-                    Volume_Disparity_5_200 = VALUES(Volume_Disparity_5_200),
-                    Volume_Disparity_20_60 = VALUES(Volume_Disparity_20_60),
-                    Volume_Disparity_20_120 = VALUES(Volume_Disparity_20_120),
-                    Volume_Disparity_20_200 = VALUES(Volume_Disparity_20_200),
-                    Volume_Disparity_60_120 = VALUES(Volume_Disparity_60_120),
-                    Volume_Disparity_60_200 = VALUES(Volume_Disparity_60_200),
-                    Volume_Disparity_120_200 = VALUES(Volume_Disparity_120_200),
-                    Volume_Volatility_5_20 = VALUES(Volume_Volatility_5_20),
-                    Volume_Volatility_5_60 = VALUES(Volume_Volatility_5_60),
-                    Volume_Volatility_5_120 = VALUES(Volume_Volatility_5_120),
-                    Volume_Volatility_5_200 = VALUES(Volume_Volatility_5_200),
-                    Volume_Volatility_20_60 = VALUES(Volume_Volatility_20_60),
-                    Volume_Volatility_20_120 = VALUES(Volume_Volatility_20_120),
-                    Volume_Volatility_20_200 = VALUES(Volume_Volatility_20_200),
-                    Volume_Volatility_60_120 = VALUES(Volume_Volatility_60_120),
-                    Volume_Volatility_60_200 = VALUES(Volume_Volatility_60_200),
-                    Volume_Volatility_120_200 = VALUES(Volume_Volatility_120_200)
-            """)
-            with engine.connect() as conn:
-                conn.execute(insert_query, **row.to_dict())
+                """)
+                with engine.connect() as conn:
+                    conn.execute(insert_query, **row.to_dict())
 
     await send_message("데이터 전처리 완료")

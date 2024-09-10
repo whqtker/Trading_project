@@ -2,6 +2,7 @@ import datetime
 import time
 from database import get_latest_dates
 from telegram_bot import send_message
+import mysql.connector
 
 # 600일 치 opt10081 데이터 수집 및 저장
 async def insert_opt10081(cursor, db, kiwoom, codes):
@@ -39,11 +40,20 @@ async def insert_opt10081(cursor, db, kiwoom, codes):
 
     await send_message("opt10081 데이터 삽입 완료")
 
+def preprocess_date(date_str):
+    try:
+        if date_str == '00000000':
+            return None
+        datetime.datetime.strptime(date_str, '%Y%m%d')
+        return date_str
+    except ValueError:
+        return None
+
 # 600일 치 opt10001 데이터 수집 및 저장
 # 값이 변동되지 않았다면 단순히 날짜만 수정
 async def insert_opt10001(cursor, db, kiwoom, codes):
     await send_message("opt10001 데이터 삽입 시작")
-    date = get_latest_dates()
+    date = get_latest_dates(cursor)
 
     opt = "opt10001"
     for i, code in enumerate(codes):
@@ -55,10 +65,13 @@ async def insert_opt10001(cursor, db, kiwoom, codes):
                               output="주식일봉차트조회",
                               next=0)
                         
-        # 데이터 전처리: 빈 값('')을 None으로 변환
+        # 데이터 전처리: 빈 값('')과 '00000000'을 None으로 변환
         preprocessed_data = []
         for row in data.itertuples(index=False):
-            preprocessed_row = (code, date) + tuple(None if cell == '' else cell for cell in row[1:])
+            preprocessed_row = (code, date) + tuple(
+                None if cell == '' or cell == '00000000' else preprocess_date(cell) if 'date' in field.lower() else cell
+                for cell, field in zip(row[1:], row._fields[1:])
+            )
             preprocessed_data.append(preprocessed_row)
 
         # INSERT 쿼리 작성
@@ -120,22 +133,28 @@ async def insert_opt10001(cursor, db, kiwoom, codes):
             values_without_date = row[2:]
 
             # 최신 날짜의 튜플 조회
-            cursor.execute(f"SELECT * FROM opt10001 WHERE stock_code = %s ORDER BY date DESC LIMIT 1", (stock_code,))
-            latest_row = cursor.fetchone()
+            try:
+                cursor.execute(f"SELECT * FROM opt10001 WHERE stock_code = %s ORDER BY date DESC LIMIT 1", (stock_code,))
+                latest_row = cursor.fetchone()
 
-            if latest_row:
-                latest_values_without_date = latest_row[2:]
+                if latest_row:
+                    latest_values_without_date = latest_row[2:]
 
-                # 최신 날짜의 튜플과 값 비교
-                if values_without_date == latest_values_without_date:
-                    # 최신 날짜의 튜플의 date 값을 업데이트
-                    cursor.execute(f"UPDATE opt10001 SET date = %s WHERE stock_code = %s AND date = %s", (date, stock_code, latest_row[1]))
+                    # 최신 날짜의 튜플과 값 비교
+                    if values_without_date == latest_values_without_date:
+                        # 최신 날짜의 튜플의 date 값을 업데이트
+                        cursor.execute(f"UPDATE opt10001 SET date = %s WHERE stock_code = %s AND date = %s", (date, stock_code, latest_row[1]))
+                    else:
+                        # 새로운 튜플 삽입
+                        cursor.execute(sql_insert, row)
                 else:
                     # 새로운 튜플 삽입
                     cursor.execute(sql_insert, row)
-            else:
-                # 새로운 튜플 삽입
-                cursor.execute(sql_insert, row)
+
+            except mysql.connector.Error as err:
+                print(f"Database connection error: {err}")
+                cursor = db.cursor()  # 재연결
+                cursor.execute(sql_insert, row)  # 재연결 후 쿼리 재실행
 
         # 변경 사항 커밋
         db.commit()
