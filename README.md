@@ -13,6 +13,10 @@ This application failed to start because no Qt platform plugin could be initiali
 => 디렉더리 관련 수정 조심!! 환경 변수 수정해야 함.
 
 main.py를 실행할 때는 3.7.9 32bit, 나머지 파일은 3.12
+
+서버급 OS를 지원하지 않음
+05:00에는 접속 자체가 불가
+1초당 5회
 ---
 TODO
 외래 키 지정

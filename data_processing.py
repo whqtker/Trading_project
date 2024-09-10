@@ -60,36 +60,6 @@ async def data_processing(cursor, db, engine):
     query = "SELECT DISTINCT stock_code FROM opt10081"
     unique_code_df = pd.read_sql(query, db)
     unique_code_list = unique_code_df['stock_code'].tolist()
-
-    # unique_code_list = [
-    #     '065560',
-    #     '136510',
-    #     '272220',
-    #     '272230',
-    #     '322120',
-    #     '322130',
-    #     '322150',
-    #     '333980',
-    #     '391590',
-    #     '400840',
-    #     '402520',
-    #     '430230',
-    #     '436180',
-    #     '510017',
-    #     '510025',
-    #     '530079',
-    #     '530080',
-    #     '530082',
-    #     '550061',
-    #     '570042',
-    #     '570043',
-    #     '570044',
-    #     '610011',
-    #     '610014',
-    #     '610015',
-    #     '610026',
-    #     '610027'
-    # ]
     
     for i, code in enumerate(unique_code_list):
         sql = f"SELECT * FROM opt10081 WHERE stock_code = '{code}'"
