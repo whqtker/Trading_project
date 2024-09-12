@@ -4,12 +4,14 @@ from config import db_config
 import mysql.connector
 from sqlalchemy import create_engine
 
+# csv 파일을 읽어서 출력
 def print_csv(file_path):
     with open(file_path, mode='r') as file:
         reader = csv.reader(file)
         for row in reader:
             print(row)  
 
+# opt10081 테이블의 데이터를 읽어 CSV 파일로 저장
 def opt10081_to_csv():
     # MySQL 데이터베이스 연결
     db = mysql.connector.connect(
@@ -51,6 +53,7 @@ def opt10081_to_csv():
     cursor.close()
     db.close()
 
+# CSV 파일의 행의 수 출력
 def row_count(file_path):
     # CSV 파일 로드
     df = pd.read_csv(file_path)
@@ -58,7 +61,3 @@ def row_count(file_path):
     # 행의 수 출력
     row_count = len(df)
     print(f"행의 수: {row_count}")
-
-# print_csv('merged_v1.csv')
-# opt10081_to_csv()
-# row_count('opt10081_data.csv')

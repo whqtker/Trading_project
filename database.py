@@ -26,7 +26,7 @@ def connect_and_create_engine():
     engine = create_db_engine()
     return db, cursor, engine
 
-# 테이블의 최신 날짜 조회
+# opt10081 테이블의 최신 날짜 조회
 def get_latest_dates(cursor):
     try:
         # Query to get the latest date from the opt10081 table

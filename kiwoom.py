@@ -56,18 +56,21 @@ def get_codes_from_name(cursor, stock_names):
 
 # 매수 종목 코드 얻기
 def get_buy_codes(cursor):
+    # 필터링 결과가 1이고 모델 확률 예측 값이 높은 종목 n개
     try:
-        query = """
+        # 모델 예측 확률 상위 n개 종목 결정
+        n = 5
+        query = f"""
         SELECT stock_code
         FROM stock_signal
         WHERE filtering = 1
         ORDER BY predicted_probability DESC
-        LIMIT 5;
+        LIMIT {n};
         """
         cursor.execute(query)
         buy_codes = cursor.fetchall()
         
-        # Extract stock codes from the query result
+        # 매수할 종목 코드 추출
         buy_codes = [code[0] for code in buy_codes]
         
         return buy_codes
@@ -77,19 +80,19 @@ def get_buy_codes(cursor):
         return []
     
 # 매도 종목 코드, 매도량 얻기
-def get_sell_codes(cursor, kiwoom):
-    bought_name = get_bought_codes(kiwoom)['종목명'].tolist()
-    sell_amount = get_bought_codes(kiwoom)['보유수량'].tolist()
+def get_sell_codes(cursor, kiwoom, limit_cnt):
+    bought_name = get_bought_codes(kiwoom)['종목명'].tolist() # 종목 이름
+    sell_amount = get_bought_codes(kiwoom)['보유수량'].tolist() # 보유량(매도량)
     bought_codes = get_codes_from_name(cursor, bought_name)
 
     if not bought_codes:
         return [], []
 
-    if len(bought_codes) >= 25:
+    if len(bought_codes) >= limit_cnt:
         # 매수한 종목들에 대하여 확률 가장 낮은 값 매도하기
-        # 단, 남은 종목들의 수는 25개여야 함
+        # 단, 남은 종목들의 수는 limit_cnt개여야 함
         try:
-            sell_cnt = len(bought_codes) - 25
+            sell_cnt = len(bought_codes) - limit_cnt
             bought_codes_str = ','.join(f"'{code}'" for code in bought_codes)
             
             query = f"""
@@ -102,7 +105,6 @@ def get_sell_codes(cursor, kiwoom):
             cursor.execute(query)
             sell_codes = cursor.fetchall()
             
-            # Extract stock codes from the query result
             sell_codes = [code[0] for code in sell_codes]
             
             return sell_codes, sell_amount
@@ -114,7 +116,7 @@ def get_sell_codes(cursor, kiwoom):
         # 매수한 종목들에 대하여 재무재표와 확률값 구하기
         # 매수 조건에 맞지 않으면 매도
         try:
-            # Convert bought_codes list to a string format suitable for SQL IN clause
+            # 보유 종목
             bought_codes_str = ','.join(f"'{code}'" for code in bought_codes)
             
             query = f"""
@@ -126,7 +128,7 @@ def get_sell_codes(cursor, kiwoom):
             cursor.execute(query)
             sell_codes = cursor.fetchall()
             
-            # Extract stock codes from the query result
+            # 매도 종목 코드 추출
             sell_codes = [code[0] for code in sell_codes]
             
             return sell_codes, sell_amount

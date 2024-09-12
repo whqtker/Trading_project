@@ -1,3 +1,4 @@
+# 매뉴얼
 0. 아래 과정은 cmd에서 진행해야 함.
 1. 프로젝트 폴더 생성
 2. 파이썬 3.7.X 32bits로 가상환경 생성: py -<버전> -m venv .venv
@@ -8,16 +9,17 @@
 
 초기 설정: https://wikidocs.net/126081#google_vignette 참고
 
+# 트러블슈팅
 qt.qpa.plugin: Could not find the Qt platform plugin "windows" in ""
 This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem. 오류 발생 시: https://log-mylife.tistory.com/entry/Could-not-load-the-Qt-platform-plugin-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0%EB%B2%95
 => 디렉더리 관련 수정 조심!! 환경 변수 수정해야 함.
 
+# 참고
 main.py를 실행할 때는 3.7.9 32bit, 나머지 파일은 3.12
 
 서버급 OS를 지원하지 않음
 05:00에는 접속 자체가 불가
 1초당 5회
----
-TODO
+
+# TODO
 외래 키 지정
-stock_signal에 모델 출력 넣기

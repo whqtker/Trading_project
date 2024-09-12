@@ -15,8 +15,9 @@ async def buy(cursor, kiwoom):
         await send_message(f"{code} 매수 주문 완료")
 
 # 실제 매도 함수
-async def sell(cursor, kiwoom):
-    sell_codes, amount = get_sell_codes(cursor, kiwoom)
+# 최대 limit_cnt만큼 종목 보유
+async def sell(cursor, kiwoom, limit_cnt):
+    sell_codes, amount = get_sell_codes(cursor, kiwoom, limit_cnt)
     if not sell_codes:
         await send_message("매도할 종목이 없습니다.")
         return

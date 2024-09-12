@@ -5,8 +5,11 @@ from telegram_bot import send_message
 import mysql.connector
 
 # 600일 치 opt10081 데이터 수집 및 저장
+# 모든 데이터의 기준 날짜는 opt10081의 date임
 async def insert_opt10081(cursor, db, kiwoom, codes):
     await send_message("opt10081 데이터 삽입 시작")
+
+    # 현재 날짜
     now = datetime.datetime.now()
     today = now.strftime("%Y%m%d")
 
@@ -40,6 +43,8 @@ async def insert_opt10081(cursor, db, kiwoom, codes):
 
     await send_message("opt10081 데이터 삽입 완료")
 
+# 파라미터로 받은 날짜 문자열을 datetime 객체로 변환
+# 변환에 실패하거나 '00000000'인 경우 None을 반환
 def preprocess_date(date_str):
     try:
         if date_str == '00000000':
@@ -53,6 +58,8 @@ def preprocess_date(date_str):
 # 값이 변동되지 않았다면 단순히 날짜만 수정
 async def insert_opt10001(cursor, db, kiwoom, codes):
     await send_message("opt10001 데이터 삽입 시작")
+
+    # opt10081 테이블의 최신 날짜로 date 설정
     date = get_latest_dates(cursor)
 
     opt = "opt10001"
@@ -137,10 +144,12 @@ async def insert_opt10001(cursor, db, kiwoom, codes):
                 cursor.execute(f"SELECT * FROM opt10001 WHERE stock_code = %s ORDER BY date DESC LIMIT 1", (stock_code,))
                 latest_row = cursor.fetchone()
 
+                # 최신 날짜의 튜플이 존재하는 경우 
                 if latest_row:
+                    # 해당 튜플의 date 값을 제외한 값
                     latest_values_without_date = latest_row[2:]
 
-                    # 최신 날짜의 튜플과 값 비교
+                    # 만약 삽입할 튜플의 date와 DB의 date가 같다면
                     if values_without_date == latest_values_without_date:
                         # 최신 날짜의 튜플의 date 값을 업데이트
                         cursor.execute(f"UPDATE opt10001 SET date = %s WHERE stock_code = %s AND date = %s", (date, stock_code, latest_row[1]))

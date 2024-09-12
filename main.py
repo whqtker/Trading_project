@@ -55,7 +55,7 @@ async def run(kiwoom, codes):
 
     # try:
     #     db, cursor, engine = connect_and_create_engine()
-    #     await sell(cursor, kiwoom)
+    #     await sell(cursor, kiwoom, 5)
     # finally:
     #     cursor.close()
     #     db.close()
