@@ -35,15 +35,15 @@ async def run(kiwoom, codes):
     #     db.close()
     #     engine.dispose()
 
-    try:
-        db, cursor, engine = connect_and_create_engine()
-        await data_processing(cursor, db, engine)
-    finally:
-        cursor.close()
-        db.close()
-        engine.dispose()
+    # try:
+    #     db, cursor, engine = connect_and_create_engine()
+    #     await data_processing(cursor, db, engine)
+    # finally:
+    #     cursor.close()
+    #     db.close()
+    #     engine.dispose()
 
-    # await sub_get_model_output()
+    await sub_get_model_output()
 
     # try:
     #     db, cursor, engine = connect_and_create_engine()

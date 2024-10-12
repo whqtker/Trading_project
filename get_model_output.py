@@ -11,9 +11,11 @@ def get_model_output():
 
         # 최신 날짜
         lastest_date = get_latest_dates(cursor)
+        lastest_date = "2022-10-07" # 임시로 지정
 
         query = f"SELECT * FROM data_processed WHERE date = '{lastest_date}'"  
         data = pd.read_sql(query, engine)
+        print(data)
 
         # 피처 컬럼 정의
         feature_columns = [
@@ -22,24 +24,16 @@ def get_model_output():
             'Price_Disparity_5_20', 'Price_Disparity_5_60', 'Price_Disparity_5_120', 'Price_Disparity_5_200',
             'Price_Disparity_20_60', 'Price_Disparity_20_120', 'Price_Disparity_20_200',
             'Price_Disparity_60_120', 'Price_Disparity_60_200', 'Price_Disparity_120_200',
-            'Volume_Disparity_5', 'Volume_Disparity_20', 'Volume_Disparity_60', 'Volume_Disparity_120', 'Volume_Disparity_200',
-            'Volume_Volatility_5', 'Volume_Volatility_20', 'Volume_Volatility_60', 'Volume_Volatility_120', 'Volume_Volatility_200',
-            'Volume_Disparity_5_20', 'Volume_Disparity_5_60', 'Volume_Disparity_5_120', 'Volume_Disparity_5_200',
-            'Volume_Disparity_20_60', 'Volume_Disparity_20_120', 'Volume_Disparity_20_200',
-            'Volume_Disparity_60_120', 'Volume_Disparity_60_200', 'Volume_Disparity_120_200',
             'Price_Volatility_5_20', 'Price_Volatility_5_60', 'Price_Volatility_5_120', 'Price_Volatility_5_200',
             'Price_Volatility_20_60', 'Price_Volatility_20_120', 'Price_Volatility_20_200',
             'Price_Volatility_60_120', 'Price_Volatility_60_200', 'Price_Volatility_120_200',
-            'Volume_Volatility_5_20', 'Volume_Volatility_5_60', 'Volume_Volatility_5_120', 'Volume_Volatility_5_200',
-            'Volume_Volatility_20_60', 'Volume_Volatility_20_120', 'Volume_Volatility_20_200',
-            'Volume_Volatility_60_120', 'Volume_Volatility_60_200', 'Volume_Volatility_120_200'
         ]
 
         # 피처 데이터를 넘파이 배열로 변환
         features = data[feature_columns].values.astype(np.float32)
 
         # 학습된 모델 로드
-        model = joblib.load('./learned_model/logstacking_model_maxfeatures.pkl')
+        model = joblib.load('./learned_model/logstacking_model_novolume.pkl')
 
         # 모델 예측 수행
         predictions = model.predict(features)
