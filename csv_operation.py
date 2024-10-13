@@ -13,45 +13,43 @@ def print_csv(file_path):
 
 # opt10081 테이블의 데이터를 읽어 CSV 파일로 저장
 def opt10081_to_csv():
-    # MySQL 데이터베이스 연결
-    db = mysql.connector.connect(
-        user=db_config['user'],
-        password=db_config['password'],
-        host=db_config['host'],
-        port=db_config['port'],
-        database=db_config['database']
-    )
+    try:
+        # MySQL 데이터베이스 연결
+        db = mysql.connector.connect(
+            user=db_config['user'],
+            password=db_config['password'],
+            host=db_config['host'],
+            port=db_config['port'],
+            database=db_config['database']
+        )
+        
+        # SQLAlchemy 엔진 생성
+        engine = create_engine(f"mysql+mysqlconnector://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}")
+        
+        # 커서 생성 및 쿼리 실행
+        cursor = db.cursor()
+        query = "SELECT * FROM opt10081"
+        cursor.execute(query)
 
-    # SQLAlchemy 엔진 생성
-    engine = create_engine(f"mysql+mysqlconnector://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}")
+        # 데이터 저장 및 CSV 파일로 저장
+        batch_size = 1000
+        columns = [i[0] for i in cursor.description]
+        with open('opt10081_data.csv', mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(columns)
+            
+            while True:
+                batch = cursor.fetchmany(batch_size)
+                if not batch:
+                    break
+                writer.writerows(batch)
 
-    # 커서 생성
-    cursor = db.cursor()
-
-    # SQL 쿼리 실행
-    query = "SELECT * FROM opt10081"
-    cursor.execute(query)
-
-    # 결과를 배치로 가져오기
-    batch_size = 1000  # 한 번에 가져올 데이터의 양
-    rows = []
-    columns = [i[0] for i in cursor.description]
-
-    while True:
-        batch = cursor.fetchmany(batch_size)
-        if not batch:
-            break
-        rows.extend(batch)
-
-    # DataFrame 생성
-    df = pd.DataFrame(rows, columns=columns)
-
-    # 결과를 CSV 파일로 저장
-    df.to_csv('opt10081_data.csv', index=False)
-
-    # 커서와 연결 종료
-    cursor.close()
-    db.close()
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+    finally:
+        # 커서와 연결 종료
+        cursor.close()
+        db.close()
 
 # CSV 파일의 행의 수 출력
 def row_count(file_path):
