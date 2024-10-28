@@ -230,11 +230,23 @@ async def data_processing(cursor, db, engine):
             if row['date'] is not None:
                 insert_query = text("""
                 INSERT INTO data_processed (stock_code, date, current_price, trading_volume, clo5, clo20, clo60, clo120, clo200, 
-                                            Price_Disparity_5, Price_Disparity_20, Price_Disparity_60, Price_Disparity_120, Price_Disparity_200, 
-                                            Price_Volatility_5, Price_Volatility_20, Price_Volatility_60, Price_Volatility_120, Price_Volatility_200)
+                            Price_Disparity_5, Price_Disparity_20, Price_Disparity_60, Price_Disparity_120, Price_Disparity_200, 
+                            Price_Volatility_5, Price_Volatility_20, Price_Volatility_60, Price_Volatility_120, Price_Volatility_200,
+                            Price_Disparity_5_20, Price_Disparity_5_60, Price_Disparity_5_120, Price_Disparity_5_200,
+                            Price_Disparity_20_60, Price_Disparity_20_120, Price_Disparity_20_200, Price_Disparity_60_120, 
+                            Price_Disparity_60_200, Price_Disparity_120_200,
+                            Price_Volatility_5_20, Price_Volatility_5_60, Price_Volatility_5_120, Price_Volatility_5_200,
+                            Price_Volatility_20_60, Price_Volatility_20_120, Price_Volatility_20_200, 
+                            Price_Volatility_60_120, Price_Volatility_60_200, Price_Volatility_120_200)
                 VALUES (:stock_code, :date, :current_price, :trading_volume, :clo5, :clo20, :clo60, :clo120, :clo200, 
-                        :Price_Disparity_5, :Price_Disparity_20, :Price_Disparity_60, :Price_Disparity_120, :Price_Disparity_200, 
-                        :Price_Volatility_5, :Price_Volatility_20, :Price_Volatility_60, :Price_Volatility_120, :Price_Volatility_200)
+        :Price_Disparity_5, :Price_Disparity_20, :Price_Disparity_60, :Price_Disparity_120, :Price_Disparity_200, 
+        :Price_Volatility_5, :Price_Volatility_20, :Price_Volatility_60, :Price_Volatility_120, :Price_Volatility_200,
+        :Price_Disparity_5_20, :Price_Disparity_5_60, :Price_Disparity_5_120, :Price_Disparity_5_200,
+        :Price_Disparity_20_60, :Price_Disparity_20_120, :Price_Disparity_20_200, :Price_Disparity_60_120, 
+        :Price_Disparity_60_200, :Price_Disparity_120_200,
+        :Price_Volatility_5_20, :Price_Volatility_5_60, :Price_Volatility_5_120, :Price_Volatility_5_200,
+        :Price_Volatility_20_60, :Price_Volatility_20_120, :Price_Volatility_20_200, 
+        :Price_Volatility_60_120, :Price_Volatility_60_200, :Price_Volatility_120_200)
                 """)
                 with engine.connect() as conn:
                     conn.execute(insert_query, **row.to_dict())
