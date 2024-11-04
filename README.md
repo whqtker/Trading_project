@@ -3,9 +3,13 @@
 
 # 개발 환경
 Databases: MySQL -> Apache Spark(?) & Hadoop(?)
+
 Server: AWS(?)
+
 Tools: Airflow(?)
+
 Language: Python 3.12 64bits & 3.7.9. 32bits(가상환경)
+
 API: 키움증권
 
 # 매뉴얼
