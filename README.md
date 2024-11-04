@@ -4,7 +4,7 @@
 # 개발 환경
 Databases: MySQL -> Apache Spark(?) & Hadoop(?)
 
-Server: AWS(?)
+Server: AWS RDS(?)
 
 Tools: Airflow(?)
 
