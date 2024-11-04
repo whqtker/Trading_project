@@ -22,7 +22,7 @@ API: 키움증권
 # 트러블슈팅
 [qt.qpa.plugin: Could not find the Qt platform plugin "windows" in ""
 This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem. 오류 발생 시](https://log-mylife.tistory.com/entry/Could-not-load-the-Qt-platform-plugin-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0%EB%B2%95)
-- 디렉더리 관련 수정 조심!! 환경 변수 수정해야 함.
+- 디렉더리 관련 메타데이터(이름 등) 함수로 수정하면 안 됨. 환경 변수 수정해야 함.
 
 # 참고
 - main.py를 실행할 때는 3.7.9 32bit, 나머지 파일은 3.12로 구동 가능.
