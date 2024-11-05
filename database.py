@@ -29,8 +29,7 @@ def connect_and_create_engine():
 # opt10081 테이블의 최신 날짜 조회
 def get_latest_dates(cursor):
     try:
-        # Query to get the latest date from the opt10081 table
-        cursor.execute("SELECT MAX(date) FROM opt10081")
+        cursor.execute("SELECT MAX(date) FROM stock")
         latest_date = cursor.fetchone()[0]
 
         # Return the result
