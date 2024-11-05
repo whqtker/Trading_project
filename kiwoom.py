@@ -1,6 +1,9 @@
 from pykiwoom.kiwoom import Kiwoom
 from config import acc_config
 import mysql.connector
+import datetime
+from database import connect_and_create_engine
+from sqlalchemy import text
 
 # 키움증권 API에 로그인
 def login():
@@ -8,10 +11,44 @@ def login():
     kiwoom.CommConnect()
     return kiwoom
 
-# 상장된 모든 종목 코드 얻기
+# 상장된 모든 종목 코드 얻기 & DB에 삽입
 def get_all_codes(kiwoom):
     kospi = kiwoom.GetCodeListByMarket('0')
     kosdaq = kiwoom.GetCodeListByMarket('10')
+
+    codes = kospi + kosdaq
+
+    # 현재 날짜
+    now = datetime.datetime.now()
+    today = now.strftime("%Y%m%d")
+
+    opt = "opt10081"
+    data = kiwoom.block_request(opt,
+                              종목코드=kospi[0],
+                              기준일자=today,
+                              수정주가구분=1,
+                              output="주식일봉차트조회",
+                              next=0)
+    
+    date = data['일자'].tolist()[0]
+
+    # 데이터베이스 연결 설정
+    db, cursor, engine = connect_and_create_engine()
+
+    try:
+        # stock 테이블에 종목 코드와 날짜 저장
+        for code in codes:
+            insert_query = text("""
+            INSERT INTO stock (stock_code, date)
+            VALUES (:stock_code, :date)
+            """)
+            with engine.connect() as conn:
+                conn.execute(insert_query, {'stock_code': code, 'date': date})
+    finally:
+        cursor.close()
+        db.close()
+        engine.dispose()
+
     return kospi + kosdaq
 
 # 매수한 종목 정보 얻기(종목 이름, 매수량 등)

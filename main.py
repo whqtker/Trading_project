@@ -11,37 +11,37 @@ import asyncio
 async def run(kiwoom, codes):
     await send_message("프로그램 시작")
 
-    # try:
-    #     db, cursor, engine = connect_and_create_engine()
-    #     await insert_opt10081(cursor, db, kiwoom, codes)
-    # finally:
-    #     cursor.close()
-    #     db.close()
-    #     engine.dispose()
+    try:
+        db, cursor, engine = connect_and_create_engine()
+        await insert_opt10081(cursor, db, kiwoom, codes)
+    finally:
+        cursor.close()
+        db.close()
+        engine.dispose()
 
-    # try:
-    #     db, cursor, engine = connect_and_create_engine()
-    #     await insert_opt10001(cursor, db, kiwoom, codes)
-    # finally:
-    #     cursor.close()
-    #     db.close()
-    #     engine.dispose()
+    try:
+        db, cursor, engine = connect_and_create_engine()
+        await insert_opt10001(cursor, db, kiwoom, codes)
+    finally:
+        cursor.close()
+        db.close()
+        engine.dispose()
 
-    # try:
-    #     db, cursor, engine = connect_and_create_engine()
-    #     await filtering(cursor, db)
-    # finally:
-    #     cursor.close()
-    #     db.close()
-    #     engine.dispose()
+    try:
+        db, cursor, engine = connect_and_create_engine()
+        await filtering(cursor, db)
+    finally:
+        cursor.close()
+        db.close()
+        engine.dispose()
 
-    # try:
-    #     db, cursor, engine = connect_and_create_engine()
-    #     await data_processing(cursor, db, engine)
-    # finally:
-    #     cursor.close()
-    #     db.close()
-    #     engine.dispose()
+    try:
+        db, cursor, engine = connect_and_create_engine()
+        await data_processing(cursor, db, engine)
+    finally:
+        cursor.close()
+        db.close()
+        engine.dispose()
 
     await sub_get_model_output()
 
