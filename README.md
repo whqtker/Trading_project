@@ -42,3 +42,4 @@ This application failed to start because no Qt platform plugin could be initiali
 # TODO
 - ERD 재설계 - ing
 - 재설계된 DB와 코드 매핑
+- main.py에서 특정 로직만 실행할 수 있도록 하는 기능 추가(디버깅용) (?)
