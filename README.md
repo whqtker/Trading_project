@@ -39,5 +39,6 @@ This application failed to start because no Qt platform plugin could be initiali
 - 05:00에는 접속 자체가 불가
 - 1초당 5회 제한
 
-# TODO!
-- ERD 재설계
+# TODO
+- ERD 재설계 - ing
+- 재설계된 DB와 코드 매핑
