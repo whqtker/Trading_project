@@ -39,7 +39,7 @@ def get_all_codes(kiwoom):
         # stock 테이블에 종목 코드와 날짜 저장
         for code in codes:
             insert_query = text("""
-            INSERT INTO stock (stock_code, date)
+            INSERT IGNORE INTO stock (stock_code, date)
             VALUES (:stock_code, :date)
             """)
             with engine.connect() as conn:
