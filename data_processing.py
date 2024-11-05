@@ -3,20 +3,16 @@ from sqlalchemy import text
 from telegram_bot import send_message
 from database import get_latest_dates
 
-# PBR, PER, ROE를 통해 필터링
-async def filtering(cursor, db):
-    await send_message("filtering 시작")
-
-    lastest_date = get_latest_dates(cursor)
-
-    # PBR 상위 30% && PER 상위 30% && ROE 상위 10%인 종목 필터링
-    sql_filtering = """
+# PBR 상위 30% && PER 상위 30% && ROE 상위 10%인 종목 필터링
+def filtering_function1(cursor, lastest_date):
+    sql_filtering = f"""
     WITH RankedData AS (
         SELECT *,
             NTILE(100) OVER (ORDER BY PBR) AS PBR_Percentile,
             NTILE(100) OVER (ORDER BY PER) AS PER_Percentile,
             NTILE(100) OVER (ORDER BY ROE) AS ROE_Percentile
         FROM opt10001
+        WHERE date = '{lastest_date}'
     )
     SELECT stock_code, date
     FROM RankedData
@@ -28,7 +24,10 @@ async def filtering(cursor, db):
     
     filtered_stock_codes = {code[0] for code in filtered_stocks}
 
-    # 표편/이평 상하위 10%, 거래대금 하위 30% 제거
+    return filtered_stock_codes
+
+# 표편/이평 상하위 10%, 거래대금 하위 30% 제거
+def filtering_function2(db, lastest_date):
     sql = f"""
     SELECT stock_code, current_price, trading_amount FROM opt10081 WHERE date = '{lastest_date}'
     """
@@ -46,40 +45,51 @@ async def filtering(cursor, db):
 
     # trading_amount의 하위 30% 제거
     df = df[df['trading_amount'] > df['trading_amount'].quantile(0.30)]
-    print(df['stock_code']) # 디버깅용
 
-    # 최종 filtered_stock_codes와 최종 df의 stock_code를 합침
-    final_filtered_stock_codes = filtered_stock_codes.union(set(df['stock_code'].unique()))
+    return df['stock_code'].unique()
 
-    # 첫 번째 필터링 결과로부터 날짜 가져오기, 없으면 None
-    date_value = filtered_stocks[0][1] if filtered_stocks else None
+# PBR, PER, ROE를 통해 필터링
+async def filtering(cursor, db):
+    await send_message("filtering 시작")
+
+    lastest_date = get_latest_dates(cursor)
+
+    # PBR 상위 30% && PER 상위 30% && ROE 상위 10%인 종목 필터링
+    filtered_codes1 = filtering_function1(cursor, lastest_date)  
+
+    # 표편/이평 상하위 10%, 거래대금 하위 30% 제거
+    filtered_codes2 = filtering_function2(db, lastest_date)
+
+    filtered_codes_final = filtered_codes1.union(filtered_codes2)
 
     # 필터링 결과가 있다면
-    if date_value is not None:
+    if filtered_codes_final is not None:
         # 최종 필터링된 종목들을 stock_signal 테이블의 filtering 열에 1로 업데이트
         sql_update_filtered = f"""
         INSERT INTO stock_signal (stock_code, date, filtering)
         SELECT stock_code, %s, 1
         FROM opt10001
-        WHERE stock_code IN ({', '.join(['%s'] * len(final_filtered_stock_codes))})
+        WHERE stock_code IN ({', '.join(['%s'] * len(filtered_codes_final))})
         ON DUPLICATE KEY UPDATE filtering = 1;
         """
         
-        cursor.execute(sql_update_filtered, (date_value, *final_filtered_stock_codes))
+        cursor.execute(sql_update_filtered, (lastest_date, *filtered_codes_final))
         
         # 최종 필터링되지 않은 종목들을 stock_signal 테이블의 filtering 열에 0으로 업데이트
         sql_update_unfiltered = f"""
         INSERT INTO stock_signal (stock_code, date, filtering)
         SELECT stock_code, %s, 0
         FROM opt10001
-        WHERE stock_code NOT IN ({', '.join(['%s'] * len(final_filtered_stock_codes))})
+        WHERE stock_code NOT IN ({', '.join(['%s'] * len(filtered_codes_final))})
         ON DUPLICATE KEY UPDATE filtering = 0;
         """
         
-        cursor.execute(sql_update_unfiltered, (date_value, *final_filtered_stock_codes))
+        cursor.execute(sql_update_unfiltered, (lastest_date, *filtered_codes_final))
         
         db.commit()
         await send_message("filtering 완료")
+    else:
+        await send_message("filtering 결과 없음")
 
 # 실제 rolling 연산 수행
 async def rolling_window(df):
