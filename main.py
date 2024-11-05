@@ -7,59 +7,28 @@ from subprocess_wrapper import sub_get_model_output
 from telegram_bot import send_message
 import asyncio
 
+async def Run(func, *args):
+    db, cursor, engine = connect_and_create_engine()
+    try:
+        await func(cursor, db, engine, *args)
+    finally:
+        cursor.close()
+        db.close()
+        engine.dispose()
+
 # 실제 매매 프로그램
 async def run(kiwoom, codes):
     await send_message("프로그램 시작")
 
-    try:
-        db, cursor, engine = connect_and_create_engine()
-        await insert_opt10081(cursor, db, kiwoom, codes)
-    finally:
-        cursor.close()
-        db.close()
-        engine.dispose()
-
-    try:
-        db, cursor, engine = connect_and_create_engine()
-        await insert_opt10001(cursor, db, kiwoom, codes)
-    finally:
-        cursor.close()
-        db.close()
-        engine.dispose()
-
-    try:
-        db, cursor, engine = connect_and_create_engine()
-        await filtering(cursor, db)
-    finally:
-        cursor.close()
-        db.close()
-        engine.dispose()
-
-    try:
-        db, cursor, engine = connect_and_create_engine()
-        await data_processing(cursor, db, engine)
-    finally:
-        cursor.close()
-        db.close()
-        engine.dispose()
+    await Run(insert_opt10081, kiwoom, codes)
+    await Run(insert_opt10001, kiwoom, codes)
+    await Run(filtering)
+    await Run(data_processing)
 
     await sub_get_model_output()
 
-    # try:
-    #     db, cursor, engine = connect_and_create_engine()
-    #     await buy(cursor, kiwoom)
-    # finally:
-    #     cursor.close()
-    #     db.close()
-    #     engine.dispose()
-
-    # try:
-    #     db, cursor, engine = connect_and_create_engine()
-    #     await sell(cursor, kiwoom, 5)
-    # finally:
-    #     cursor.close()
-    #     db.close()
-    #     engine.dispose()
+    await Run(buy, kiwoom)
+    await Run(sell, kiwoom, 5)
 
     await send_message("프로그램 종료")
 
