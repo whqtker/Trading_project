@@ -13,9 +13,9 @@ Language: Python 3.12 64bits & 3.7.9. 32bits(가상환경)
 API: 키움증권
 
 # ERD
-[stock_project](https://github.com/user-attachments/assets/644a142e-b9f5-4a4a-8e58-11af9859ac8e)
+![ERD](https://github.com/user-attachments/assets/3f5ef10b-32d0-4eb3-80ea-036c089e6f22)
 
-24.11.04 ver.
+24.11.05 ver.
 
 # 매뉴얼
 0. 아래 과정은 cmd에서 진행해야 함.
