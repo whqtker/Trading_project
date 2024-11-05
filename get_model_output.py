@@ -11,7 +11,6 @@ def get_model_output():
 
         # 최신 날짜
         lastest_date = get_latest_dates(cursor)
-        lastest_date = "2022-10-07" # 임시로 지정
 
         query = f"SELECT * FROM data_processed WHERE date = '{lastest_date}'"  
         data = pd.read_sql(query, engine)
