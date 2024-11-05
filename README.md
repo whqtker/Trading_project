@@ -3,10 +3,19 @@
 
 # 개발 환경
 Databases: MySQL -> Apache Spark(?) & Hadoop(?)
-Server: AWS(?)
+
+Server: AWS RDS(?)
+
 Tools: Airflow(?)
+
 Language: Python 3.12 64bits & 3.7.9. 32bits(가상환경)
+
 API: 키움증권
+
+# ERD
+[stock_project](https://github.com/user-attachments/assets/644a142e-b9f5-4a4a-8e58-11af9859ac8e)
+
+24.11.04 ver.
 
 # 매뉴얼
 0. 아래 과정은 cmd에서 진행해야 함.
@@ -30,5 +39,5 @@ This application failed to start because no Qt platform plugin could be initiali
 - 05:00에는 접속 자체가 불가
 - 1초당 5회 제한
 
-# TODO
+# TODO!
 - ERD 재설계
