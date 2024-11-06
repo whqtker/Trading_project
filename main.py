@@ -20,15 +20,15 @@ async def Run(func, *args):
 async def run(kiwoom, codes):
     await send_message("프로그램 시작")
 
-    await Run(insert_opt10081, kiwoom, codes)
-    await Run(insert_opt10001, kiwoom, codes)
+    # await Run(insert_opt10081, kiwoom, codes)
+    # await Run(insert_opt10001, kiwoom, codes)
     await Run(filtering)
-    await Run(data_processing)
+    # await Run(data_processing)
 
-    await sub_get_model_output()
+    # await sub_get_model_output()
 
-    await Run(buy, kiwoom)
-    await Run(sell, kiwoom, 5)
+    # await Run(buy, kiwoom)
+    # await Run(sell, kiwoom, 5)
 
     await send_message("프로그램 종료")
 

@@ -49,7 +49,7 @@ def filtering_function2(db, lastest_date):
     return df['stock_code'].unique()
 
 # PBR, PER, ROE를 통해 필터링
-async def filtering(cursor, db):
+async def filtering(cursor, db, engine):
     await send_message("filtering 시작")
 
     lastest_date = get_latest_dates(cursor)
@@ -63,29 +63,25 @@ async def filtering(cursor, db):
     filtered_codes_final = filtered_codes1.union(filtered_codes2)
 
     # 필터링 결과가 있다면
-    if filtered_codes_final is not None:
+    if filtered_codes_final:
         # 최종 필터링된 종목들을 stock_signal 테이블의 filtering 열에 1로 업데이트
+        codes_placeholder = ', '.join(['%s'] * len(filtered_codes_final))
         sql_update_filtered = f"""
         INSERT INTO stock_signal (stock_code, date, filtering)
-        SELECT stock_code, %s, 1
-        FROM opt10001
-        WHERE stock_code IN ({', '.join(['%s'] * len(filtered_codes_final))})
-        ON DUPLICATE KEY UPDATE filtering = 1;
+        VALUES ({codes_placeholder}, %s, 1)
+        ON DUPLICATE KEY UPDATE filtering = 1
         """
-        
-        cursor.execute(sql_update_filtered, (lastest_date, *filtered_codes_final))
+        cursor.execute(sql_update_filtered, (*filtered_codes_final, lastest_date))
         
         # 최종 필터링되지 않은 종목들을 stock_signal 테이블의 filtering 열에 0으로 업데이트
         sql_update_unfiltered = f"""
         INSERT INTO stock_signal (stock_code, date, filtering)
         SELECT stock_code, %s, 0
         FROM opt10001
-        WHERE stock_code NOT IN ({', '.join(['%s'] * len(filtered_codes_final))})
-        ON DUPLICATE KEY UPDATE filtering = 0;
+        WHERE stock_code NOT IN ({codes_placeholder})
+        ON DUPLICATE KEY UPDATE filtering = 0
         """
-        
         cursor.execute(sql_update_unfiltered, (lastest_date, *filtered_codes_final))
-        
         db.commit()
         await send_message("filtering 완료")
     else:
