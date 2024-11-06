@@ -6,7 +6,7 @@ import mysql.connector
 
 # 600일 치 opt10081 데이터 수집 및 저장
 # 모든 데이터의 기준 날짜는 opt10081의 date임
-async def insert_opt10081(cursor, db, kiwoom, codes):
+async def insert_opt10081(cursor, db, engine, kiwoom, codes):
     await send_message("opt10081 데이터 삽입 시작")
 
     # 현재 날짜
@@ -56,7 +56,7 @@ def preprocess_date(date_str):
 
 # 600일 치 opt10001 데이터 수집 및 저장
 # 값이 변동되지 않았다면 단순히 날짜만 수정
-async def insert_opt10001(cursor, db, kiwoom, codes):
+async def insert_opt10001(cursor, db, engine, kiwoom, codes):
     await send_message("opt10001 데이터 삽입 시작")
 
     # opt10081 테이블의 최신 날짜로 date 설정

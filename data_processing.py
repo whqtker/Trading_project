@@ -203,14 +203,17 @@ async def data_processing(cursor, db, engine):
     await send_message("데이터 전처리 시작")
 
     lastest_date = get_latest_dates(cursor)
+    lastest_date = '2024-11-05'
 
     # stock_signal 테이블에서 필터링된 종목들을 가져옴
     query = f"SELECT DISTINCT stock_code FROM stock_signal WHERE date = '{lastest_date}' and filtering = 1"
-    unique_code_df = pd.read_sql(query, db)
-    unique_code_list = unique_code_df['stock_code'].tolist()
+    query_result = pd.read_sql(query, db)
+    unique_code_list = query_result['stock_code'].tolist()
     
     # @@ 효율적인 방법 구상 @@
     for i, code in enumerate(unique_code_list):
+        print(f"{i+1}/{len(unique_code_list)}: {code}")
+        
         sql = f"SELECT * FROM opt10081 WHERE stock_code = '{code}'"
         df = pd.read_sql(sql, db)
         df.sort_values(by='date', ascending=True, inplace=True)
@@ -245,14 +248,14 @@ async def data_processing(cursor, db, engine):
                             Price_Volatility_20_60, Price_Volatility_20_120, Price_Volatility_20_200, 
                             Price_Volatility_60_120, Price_Volatility_60_200, Price_Volatility_120_200)
                 VALUES (:stock_code, :date, :current_price, :trading_volume, :clo5, :clo20, :clo60, :clo120, :clo200, 
-        :Price_Disparity_5, :Price_Disparity_20, :Price_Disparity_60, :Price_Disparity_120, :Price_Disparity_200, 
-        :Price_Volatility_5, :Price_Volatility_20, :Price_Volatility_60, :Price_Volatility_120, :Price_Volatility_200,
-        :Price_Disparity_5_20, :Price_Disparity_5_60, :Price_Disparity_5_120, :Price_Disparity_5_200,
-        :Price_Disparity_20_60, :Price_Disparity_20_120, :Price_Disparity_20_200, :Price_Disparity_60_120, 
-        :Price_Disparity_60_200, :Price_Disparity_120_200,
-        :Price_Volatility_5_20, :Price_Volatility_5_60, :Price_Volatility_5_120, :Price_Volatility_5_200,
-        :Price_Volatility_20_60, :Price_Volatility_20_120, :Price_Volatility_20_200, 
-        :Price_Volatility_60_120, :Price_Volatility_60_200, :Price_Volatility_120_200)
+                :Price_Disparity_5, :Price_Disparity_20, :Price_Disparity_60, :Price_Disparity_120, :Price_Disparity_200, 
+                :Price_Volatility_5, :Price_Volatility_20, :Price_Volatility_60, :Price_Volatility_120, :Price_Volatility_200,
+                :Price_Disparity_5_20, :Price_Disparity_5_60, :Price_Disparity_5_120, :Price_Disparity_5_200,
+                :Price_Disparity_20_60, :Price_Disparity_20_120, :Price_Disparity_20_200, :Price_Disparity_60_120, 
+                :Price_Disparity_60_200, :Price_Disparity_120_200,
+                :Price_Volatility_5_20, :Price_Volatility_5_60, :Price_Volatility_5_120, :Price_Volatility_5_200,
+                :Price_Volatility_20_60, :Price_Volatility_20_120, :Price_Volatility_20_200, 
+                :Price_Volatility_60_120, :Price_Volatility_60_200, :Price_Volatility_120_200)
                 """)
                 with engine.connect() as conn:
                     conn.execute(insert_query, **row.to_dict())
