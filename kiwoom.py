@@ -11,7 +11,7 @@ def login():
     kiwoom.CommConnect()
     return kiwoom
 
-# 상장된 모든 종목 코드 얻기 & DB에 삽입
+# 상장된 모든 종목 코드 얻기 & 가장 최근의 장마감 날짜와 이전 600일 치 정보 DB에 삽입
 def get_all_codes(kiwoom):
     kospi = kiwoom.GetCodeListByMarket('0')
     kosdaq = kiwoom.GetCodeListByMarket('10')
@@ -30,7 +30,7 @@ def get_all_codes(kiwoom):
                               output="주식일봉차트조회",
                               next=0)
     
-    date = data['일자'].tolist()[0]
+    dates = data['일자'].tolist()
 
     # 데이터베이스 연결 설정
     db, cursor, engine = connect_and_create_engine()
@@ -43,7 +43,8 @@ def get_all_codes(kiwoom):
             VALUES (:stock_code, :date)
             """)
             with engine.connect() as conn:
-                conn.execute(insert_query, {'stock_code': code, 'date': date})
+                for date in dates:
+                    conn.execute(insert_query, {'stock_code': code, 'date': date})
     finally:
         cursor.close()
         db.close()

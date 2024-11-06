@@ -22,7 +22,7 @@ async def insert_opt10081(cursor, db, engine, kiwoom, codes):
                               수정주가구분=1,
                               output="주식일봉차트조회",
                               next=0)
-        
+                
         # 데이터 전처리: 빈 값('')을 None으로 변환
         preprocessed_data = []
         for row in data.itertuples(index=False):
@@ -30,10 +30,29 @@ async def insert_opt10081(cursor, db, engine, kiwoom, codes):
             preprocessed_data.append(preprocessed_row)
 
         # INSERT 쿼리 작성
-        sql = "INSERT IGNORE INTO opt10081 (stock_code, current_price, trading_volume, trading_amount, date, open_price, high_price, low_price, adjusted_price_flag, adjusted_price_ratio, sector, sub_sector, stock_info, adjusted_price_event, previous_close_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        sql = """
+        INSERT INTO opt10081 (
+            stock_code, current_price, trading_volume, trading_amount, date, open_price, high_price, low_price, adjusted_price_flag, adjusted_price_ratio, sector, sub_sector, stock_info, adjusted_price_event, previous_close_price
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE
+            current_price = VALUES(current_price),
+            trading_volume = VALUES(trading_volume),
+            trading_amount = VALUES(trading_amount),
+            date = VALUES(date),
+            open_price = VALUES(open_price),
+            high_price = VALUES(high_price),
+            low_price = VALUES(low_price),
+            adjusted_price_flag = VALUES(adjusted_price_flag),
+            adjusted_price_ratio = VALUES(adjusted_price_ratio),
+            sector = VALUES(sector),
+            sub_sector = VALUES(sub_sector),
+            stock_info = VALUES(stock_info),
+            adjusted_price_event = VALUES(adjusted_price_event),
+            previous_close_price = VALUES(previous_close_price)
+    """
         
-        # 쿼리 실행
-        if preprocessed_data:  # 데이터가 비어있지 않은 경우에만 실행
+        # 데이터가 비어있지 않은 경우에만 실행
+        if preprocessed_data:  
             cursor.executemany(sql, preprocessed_data)
 
         # 변경 사항 커밋
