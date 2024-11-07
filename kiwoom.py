@@ -38,13 +38,26 @@ def get_all_codes(kiwoom):
     try:
         # stock 테이블에 종목 코드와 날짜 저장
         for code in codes:
-            insert_query = text("""
-            INSERT IGNORE INTO stock (stock_code, date)
-            VALUES (:stock_code, :date)
+            # 이미 존재하는 (stock_code, date) 쌍 조회
+            existing_dates_query = text("""
+            SELECT date FROM stock WHERE stock_code = :stock_code
             """)
             with engine.connect() as conn:
-                for date in dates:
-                    conn.execute(insert_query, {'stock_code': code, 'date': date})
+                result = conn.execute(existing_dates_query, {'stock_code': code})
+                existing_dates = {row['date'] for row in result}
+
+            # 중복되지 않는 데이터 필터링
+            new_dates = [date for date in dates if date not in existing_dates]
+
+            # 새로운 데이터만 삽입
+            if new_dates:
+                insert_query = text("""
+                INSERT IGNORE INTO stock (stock_code, date)
+                VALUES (:stock_code, :date)
+                """)
+                with engine.connect() as conn:
+                    conn.execute(insert_query, [{'stock_code': code, 'date': date} for date in new_dates])
+
     finally:
         cursor.close()
         db.close()
