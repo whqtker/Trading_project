@@ -119,7 +119,7 @@ async def insert_opt10001(cursor, db, engine, kiwoom, codes):
         # 데이터 전처리: 빈 값('')과 '00000000'을 None으로 변환
         preprocessed_data = []
         for row in data.itertuples(index=False):
-            preprocessed_row = (code, today) + tuple(
+            preprocessed_row = (code, date) + tuple(
                 None if cell == '' or cell == '00000000' else preprocess_date(cell) if 'date' in field.lower() else cell
                 for cell, field in zip(row[1:], row._fields[1:])
             )
