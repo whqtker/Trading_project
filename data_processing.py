@@ -65,27 +65,30 @@ async def filtering(cursor, db, engine):
     # 필터링 결과가 있다면
     if filtered_codes_final:
         # 최종 필터링된 종목들을 stock_signal 테이블의 filtering 열에 1로 업데이트
-        codes_placeholder = ', '.join(['%s'] * len(filtered_codes_final))
-        sql_update_filtered = f"""
+        values = [(code, lastest_date, 1) for code in filtered_codes_final]
+        sql_update_filtered = """
         INSERT INTO stock_signal (stock_code, date, filtering)
-        VALUES ({codes_placeholder}, %s, 1)
-        ON DUPLICATE KEY UPDATE filtering = 1
+        VALUES (%s, %s, %s)
+        ON DUPLICATE KEY UPDATE filtering = VALUES(filtering)
         """
-        cursor.execute(sql_update_filtered, (*filtered_codes_final, lastest_date))
+        cursor.executemany(sql_update_filtered, values)
         
         # 최종 필터링되지 않은 종목들을 stock_signal 테이블의 filtering 열에 0으로 업데이트
+        codes_placeholder = ', '.join(['%s'] * len(filtered_codes_final))
         sql_update_unfiltered = f"""
         INSERT INTO stock_signal (stock_code, date, filtering)
         SELECT stock_code, %s, 0
         FROM opt10001
         WHERE stock_code NOT IN ({codes_placeholder})
+        AND date = %s
         ON DUPLICATE KEY UPDATE filtering = 0
         """
-        cursor.execute(sql_update_unfiltered, (lastest_date, *filtered_codes_final))
+        cursor.execute(sql_update_unfiltered, (lastest_date, *filtered_codes_final, lastest_date))
         db.commit()
+        
         await send_message("filtering 완료")
     else:
-        await send_message("filtering 결과 없음")
+        await send_message("필터링 결과가 없습니다.")
 
 # 실제 rolling 연산 수행
 async def rolling_window(df):

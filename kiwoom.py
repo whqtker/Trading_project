@@ -11,58 +11,11 @@ def login():
     kiwoom.CommConnect()
     return kiwoom
 
-# 상장된 모든 종목 코드 얻기 & 가장 최근의 장마감 날짜와 이전 600일 치 정보 DB에 삽입
+# 상장된 모든 종목 코드 얻기
 def get_all_codes(kiwoom):
     kospi = kiwoom.GetCodeListByMarket('0')
     kosdaq = kiwoom.GetCodeListByMarket('10')
-
-    codes = kospi + kosdaq
-
-    # 현재 날짜
-    now = datetime.datetime.now()
-    today = now.strftime("%Y%m%d")
-
-    opt = "opt10081"
-    data = kiwoom.block_request(opt,
-                              종목코드=kospi[0],
-                              기준일자=today,
-                              수정주가구분=1,
-                              output="주식일봉차트조회",
-                              next=0)
     
-    dates = data['일자'].tolist()
-
-    # 데이터베이스 연결 설정
-    db, cursor, engine = connect_and_create_engine()
-
-    try:
-        # stock 테이블에 종목 코드와 날짜 저장
-        for code in codes:
-            # 이미 존재하는 (stock_code, date) 쌍 조회
-            existing_dates_query = text("""
-            SELECT date FROM stock WHERE stock_code = :stock_code
-            """)
-            with engine.connect() as conn:
-                result = conn.execute(existing_dates_query, {'stock_code': code})
-                existing_dates = {row['date'] for row in result}
-
-            # 중복되지 않는 데이터 필터링
-            new_dates = [date for date in dates if date not in existing_dates]
-
-            # 새로운 데이터만 삽입
-            if new_dates:
-                insert_query = text("""
-                INSERT IGNORE INTO stock (stock_code, date)
-                VALUES (:stock_code, :date)
-                """)
-                with engine.connect() as conn:
-                    conn.execute(insert_query, [{'stock_code': code, 'date': date} for date in new_dates])
-
-    finally:
-        cursor.close()
-        db.close()
-        engine.dispose()
-
     return kospi + kosdaq
 
 # 매수한 종목 정보 얻기(종목 이름, 매수량 등)

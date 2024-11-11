@@ -3,6 +3,7 @@ import time
 from database import get_latest_dates
 from telegram_bot import send_message
 import mysql.connector
+from sqlalchemy import text
 
 # 600일 치 opt10081 데이터 수집 및 저장
 # 모든 데이터의 기준 날짜는 opt10081의 date임
@@ -28,6 +29,30 @@ async def insert_opt10081(cursor, db, engine, kiwoom, codes):
         for row in data.itertuples(index=False):
             preprocessed_row = (code,) + tuple(None if cell == '' else cell for cell in row[1:])
             preprocessed_data.append(preprocessed_row)
+
+        # date 값이 None인 행을 필터링 
+        preprocessed_data = [row for row in preprocessed_data if row[4] is not None]
+
+        # stock 테이블에 종목 코드와 날짜 저장
+        dates = [row[4] for row in preprocessed_data]  # date는 preprocessed_row의 5번째 요소
+        existing_dates_query = text("""
+        SELECT date FROM stock WHERE stock_code = :stock_code
+        """)
+        with engine.connect() as conn:
+            result = conn.execute(existing_dates_query, {'stock_code': code})
+            existing_dates = {row['date'] for row in result}
+
+        # 중복되지 않는 데이터 필터링
+        new_dates = [date for date in dates if date not in existing_dates]
+
+        # 새로운 데이터만 삽입
+        if new_dates:
+            insert_query = text("""
+            INSERT IGNORE INTO stock (stock_code, date)
+            VALUES (:stock_code, :date)
+            """)
+            with engine.connect() as conn:
+                conn.execute(insert_query, [{'stock_code': code, 'date': date} for date in new_dates])
 
         # INSERT 쿼리 작성
         sql = """
@@ -94,7 +119,7 @@ async def insert_opt10001(cursor, db, engine, kiwoom, codes):
         # 데이터 전처리: 빈 값('')과 '00000000'을 None으로 변환
         preprocessed_data = []
         for row in data.itertuples(index=False):
-            preprocessed_row = (code, date) + tuple(
+            preprocessed_row = (code, today) + tuple(
                 None if cell == '' or cell == '00000000' else preprocess_date(cell) if 'date' in field.lower() else cell
                 for cell, field in zip(row[1:], row._fields[1:])
             )
@@ -106,7 +131,6 @@ async def insert_opt10001(cursor, db, engine, kiwoom, codes):
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE
             stock_name = VALUES(stock_name),
-            date = VALUES(date),
             fiscal_month = VALUES(fiscal_month),
             par_value = VALUES(par_value),
             capital = VALUES(capital),
@@ -154,31 +178,8 @@ async def insert_opt10001(cursor, db, engine, kiwoom, codes):
 
         # 쿼리 실행
         for row in preprocessed_data:
-            stock_code = row[0]
-            date = row[1]
-            values_without_date = row[2:]
-
-            # 최신 날짜의 튜플 조회
             try:
-                cursor.execute(f"SELECT * FROM opt10001 WHERE stock_code = %s ORDER BY date DESC LIMIT 1", (stock_code,))
-                latest_row = cursor.fetchone()
-
-                # 최신 날짜의 튜플이 존재하는 경우 
-                if latest_row:
-                    # 해당 튜플의 date 값을 제외한 값
-                    latest_values_without_date = latest_row[2:]
-
-                    # 만약 삽입할 튜플의 date와 DB의 date가 같다면
-                    if values_without_date == latest_values_without_date:
-                        # 최신 날짜의 튜플의 date 값을 업데이트
-                        cursor.execute(f"UPDATE opt10001 SET date = %s WHERE stock_code = %s AND date = %s", (date, stock_code, latest_row[1]))
-                    else:
-                        # 새로운 튜플 삽입
-                        cursor.execute(sql_insert, row)
-                else:
-                    # 새로운 튜플 삽입
-                    cursor.execute(sql_insert, row)
-
+                cursor.execute(sql_insert, row)
             except mysql.connector.Error as err:
                 print(f"Database connection error: {err}")
                 cursor = db.cursor()  # 재연결
