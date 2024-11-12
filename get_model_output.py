@@ -4,6 +4,10 @@ import joblib
 import mysql.connector
 from database import connect_and_create_engine, get_latest_dates
 from config import db_config
+import sys
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 def get_model_output():
     try:
@@ -14,7 +18,6 @@ def get_model_output():
 
         query = f"SELECT * FROM data_processed WHERE date = '{lastest_date}'"  
         data = pd.read_sql(query, engine)
-        print(data)
 
         # 피처 컬럼 정의
         feature_columns = [
@@ -65,3 +68,7 @@ def get_model_output():
             db.close()
         if 'engine' in locals() and engine:
             engine.dispose()
+
+if __name__ == "__main__":
+    get_model_output()
+    sys.stdout.flush() 
