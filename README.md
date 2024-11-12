@@ -40,7 +40,10 @@ This application failed to start because no Qt platform plugin could be initiali
 - 1초당 5회 제한
 
 # TODO
-- ERD 재설계 - ing
-- 재설계된 DB와 코드 매핑
+- ~~ERD 재설계 - ing~~ -> 기존 테이블(data_processed 유지)
+- ~~재설계된 DB와 코드 매핑~~ -> 기존 테이블(data_processed 유지)
+- data_processed 그대로 유지함에 따른 ERD 재설계
+-- data_processed 모듈화하면 모델 입력을 위해 DB 접근 시 각 테이블에서 가져와야 함.
 - main.py에서 특정 로직만 실행할 수 있도록 하는 기능 추가(디버깅용) (?)
+- **opt10081에서 stock 테이블 초기화**
 - 단위 테스트 코드 추가
