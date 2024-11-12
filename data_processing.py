@@ -206,7 +206,6 @@ async def data_processing(cursor, db, engine):
     await send_message("데이터 전처리 시작")
 
     lastest_date = get_latest_dates(cursor)
-    lastest_date = '2024-11-05'
 
     # stock_signal 테이블에서 필터링된 종목들을 가져옴
     query = f"SELECT DISTINCT stock_code FROM stock_signal WHERE date = '{lastest_date}' and filtering = 1"

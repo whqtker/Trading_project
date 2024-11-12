@@ -103,7 +103,6 @@ def preprocess_date(date_str):
 async def insert_opt10001(cursor, db, engine, kiwoom, codes):
     await send_message("opt10001 데이터 삽입 시작")
 
-    # opt10081 테이블의 최신 날짜로 date 설정
     date = get_latest_dates(cursor)
 
     opt = "opt10001"
@@ -116,64 +115,51 @@ async def insert_opt10001(cursor, db, engine, kiwoom, codes):
                               output="주식일봉차트조회",
                               next=0)
                         
-        # 데이터 전처리: 빈 값('')과 '00000000'을 None으로 변환
         preprocessed_data = []
         for row in data.itertuples(index=False):
-            preprocessed_row = (code, date) + tuple(
-                None if cell == '' or cell == '00000000' else preprocess_date(cell) if 'date' in field.lower() else cell
-                for cell, field in zip(row[1:], row._fields[1:])
-            )
+            preprocessed_row = (code,) + tuple(None if cell == '' else cell for cell in row[1:])
             preprocessed_data.append(preprocessed_row)
 
-        # INSERT 쿼리 작성
+        preprocessed_data = [row + (date,) for row in preprocessed_data]
+
         sql_insert = """
-        INSERT INTO opt10001 (stock_code, date, stock_name, fiscal_month, par_value, capital, listed_shares, credit_ratio, year_high, year_low, market_cap, market_cap_ratio, foreign_ownership_ratio, reference_price, PER, EPS, ROE, PBR, EV, BPS, revenue, operating_profit, net_income, high_250, low_250, open_price, high_price, low_price, upper_limit, lower_limit, standard_price, expected_price, expected_volume, high_250_date, high_250_ratio, low_250_date, low_250_ratio, current_price, change_symbol, change_from_prev, change_rate, volume, volume_ratio, par_value_unit, outstanding_shares, float_ratio)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            stock_name = VALUES(stock_name),
-            fiscal_month = VALUES(fiscal_month),
-            par_value = VALUES(par_value),
-            capital = VALUES(capital),
-            listed_shares = VALUES(listed_shares),
-            credit_ratio = VALUES(credit_ratio),
-            year_high = VALUES(year_high),
-            year_low = VALUES(year_low),
-            market_cap = VALUES(market_cap),
-            market_cap_ratio = VALUES(market_cap_ratio),
-            foreign_ownership_ratio = VALUES(foreign_ownership_ratio),
-            reference_price = VALUES(reference_price),
-            PER = VALUES(PER),
-            EPS = VALUES(EPS),
-            ROE = VALUES(ROE),
-            PBR = VALUES(PBR),
-            EV = VALUES(EV),
-            BPS = VALUES(BPS),
-            revenue = VALUES(revenue),
-            operating_profit = VALUES(operating_profit),
-            net_income = VALUES(net_income),
-            high_250 = VALUES(high_250),
-            low_250 = VALUES(low_250),
-            open_price = VALUES(open_price),
-            high_price = VALUES(high_price),
-            low_price = VALUES(low_price),
-            upper_limit = VALUES(upper_limit),
-            lower_limit = VALUES(lower_limit),
-            standard_price = VALUES(standard_price),
-            expected_price = VALUES(expected_price),
-            expected_volume = VALUES(expected_volume),
-            high_250_date = VALUES(high_250_date),
-            high_250_ratio = VALUES(high_250_ratio),
-            low_250_date = VALUES(low_250_date),
-            low_250_ratio = VALUES(low_250_ratio),
-            current_price = VALUES(current_price),
-            change_symbol = VALUES(change_symbol),
-            change_from_prev = VALUES(change_from_prev),
-            change_rate = VALUES(change_rate),
-            volume = VALUES(volume),
-            volume_ratio = VALUES(volume_ratio),
-            par_value_unit = VALUES(par_value_unit),
-            outstanding_shares = VALUES(outstanding_shares),
-            float_ratio = VALUES(float_ratio)
+        INSERT INTO opt10001 (
+            stock_code, stock_name, fiscal_month, par_value, capital, 
+            listed_shares, credit_ratio, year_high, year_low, market_cap, 
+            market_cap_ratio, foreign_ownership_ratio, reference_price, PER, 
+            EPS, ROE, PBR, EV, BPS, revenue, operating_profit, net_income, 
+            high_250, low_250, open_price, high_price, low_price, upper_limit, 
+            lower_limit, standard_price, expected_price, expected_volume, 
+            high_250_date, high_250_ratio, low_250_date, low_250_ratio, 
+            current_price, change_symbol, change_from_prev, change_rate, 
+            volume, volume_ratio, par_value_unit, outstanding_shares, float_ratio, date
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s
+        ) ON DUPLICATE KEY UPDATE
+            stock_code = VALUES(stock_code), stock_name=VALUES(stock_name), date=VALUES(date), fiscal_month=VALUES(fiscal_month),
+            par_value=VALUES(par_value), capital=VALUES(capital),
+            listed_shares=VALUES(listed_shares), credit_ratio=VALUES(credit_ratio),
+            year_high=VALUES(year_high), year_low=VALUES(year_low),
+            market_cap=VALUES(market_cap), market_cap_ratio=VALUES(market_cap_ratio),
+            foreign_ownership_ratio=VALUES(foreign_ownership_ratio),
+            reference_price=VALUES(reference_price), PER=VALUES(PER),
+            EPS=VALUES(EPS), ROE=VALUES(ROE), PBR=VALUES(PBR),
+            EV=VALUES(EV), BPS=VALUES(BPS), revenue=VALUES(revenue),
+            operating_profit=VALUES(operating_profit), net_income=VALUES(net_income),
+            high_250=VALUES(high_250), low_250=VALUES(low_250),
+            open_price=VALUES(open_price), high_price=VALUES(high_price),
+            low_price=VALUES(low_price), upper_limit=VALUES(upper_limit),
+            lower_limit=VALUES(lower_limit), standard_price=VALUES(standard_price),
+            expected_price=VALUES(expected_price), expected_volume=VALUES(expected_volume),
+            high_250_date=VALUES(high_250_date), high_250_ratio=VALUES(high_250_ratio),
+            low_250_date=VALUES(low_250_date), low_250_ratio=VALUES(low_250_ratio),
+            current_price=VALUES(current_price), change_symbol=VALUES(change_symbol),
+            change_from_prev=VALUES(change_from_prev), change_rate=VALUES(change_rate),
+            volume=VALUES(volume), volume_ratio=VALUES(volume_ratio),
+            par_value_unit=VALUES(par_value_unit), outstanding_shares=VALUES(outstanding_shares),
+            float_ratio=VALUES(float_ratio), date=VALUES(date)
         """
 
         # 쿼리 실행
@@ -181,12 +167,10 @@ async def insert_opt10001(cursor, db, engine, kiwoom, codes):
             try:
                 cursor.execute(sql_insert, row)
             except mysql.connector.Error as err:
-                print(f"Database connection error: {err}")
-                cursor = db.cursor()  # 재연결
-                cursor.execute(sql_insert, row)  # 재연결 후 쿼리 재실행
-
-        # 변경 사항 커밋
-        db.commit()
+                print(f"Error: {err}")
+                db.rollback()
+            else:
+                db.commit()
 
         time.sleep(3.6)
 
