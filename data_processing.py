@@ -3,7 +3,7 @@ from sqlalchemy import text
 from telegram_bot import send_message
 from database import get_latest_dates
 
-# PBR 상위 30% && PER 상위 30% && ROE 상위 10%인 종목 필터링
+# PBR 상위 30% 제거, ROE 하위 10% 제거, PBR <= 0 제거, ROE null 제거
 def filtering_function1(cursor, lastest_date):
     sql_filtering = f"""
     WITH RankedData AS (
@@ -16,7 +16,11 @@ def filtering_function1(cursor, lastest_date):
     )
     SELECT stock_code, date
     FROM RankedData
-    WHERE PBR_Percentile > 30 AND PER_Percentile > 30 AND ROE_Percentile > 10;
+    WHERE PBR_Percentile <= 70 
+      AND ROE_Percentile > 10
+      AND PBR > 0
+      AND ROE IS NOT NULL
+      AND ROE > 0;
     """
     
     cursor.execute(sql_filtering)
@@ -26,7 +30,7 @@ def filtering_function1(cursor, lastest_date):
 
     return filtered_stock_codes
 
-# 표편/이평 상하위 10%, 거래대금 하위 30% 제거
+# 20일 변동성 하위 50% 제거, 거래대금 하위 50% 제거
 def filtering_function2(db, lastest_date):
     sql = f"""
     SELECT stock_code, current_price, trading_amount FROM opt10081 WHERE date = '{lastest_date}'
@@ -39,12 +43,11 @@ def filtering_function2(db, lastest_date):
     std20 = df['current_price'].rolling(window=20).std()
     df['Price_Volatility_20'] = std20 / clo20
 
-    # Price_Volatility_20의 상하위 10% 제거
-    df = df[(df['Price_Volatility_20'] >= df['Price_Volatility_20'].quantile(0.10)) & 
-            (df['Price_Volatility_20'] <= df['Price_Volatility_20'].quantile(0.90))]
+    # Price_Volatility_20의 하위 50% 제거
+    df = df[df['Price_Volatility_20'] > df['Price_Volatility_20'].quantile(0.50)]
 
     # trading_amount의 하위 30% 제거
-    df = df[df['trading_amount'] > df['trading_amount'].quantile(0.30)]
+    df = df[df['trading_amount'] > df['trading_amount'].quantile(0.50)]
 
     return df['stock_code'].unique()
 
